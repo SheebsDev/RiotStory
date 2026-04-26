@@ -6,6 +6,8 @@
 
 class ACardBucket;
 class USceneComponent;
+class UInterpToMovementComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class RIOTSTORY_API ACardBucketSpawnPoint : public AActor
@@ -23,13 +25,13 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket")
     TSubclassOf<ACardBucket> BucketClass;
 
-    /** Offset from spawn point transform used for bucket StartPosition. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
-    FVector StartOffset = FVector::ZeroVector;
+    /** Local control-point offsets used for viewport editing and mirrored into InterpToMovement. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement", meta=(MakeEditWidget=true))
+    TArray<FVector> ControlPointOffsets;
 
-    /** Offset from spawn point transform used for bucket EndPosition. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
-    FVector EndOffset = FVector::ZeroVector;
+    /** Editor-only mesh for visualizing the spawn point in the level. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Card Bucket|Editor", meta=(AllowPrivateAccess="true"))
+    TObjectPtr<UStaticMeshComponent> EditorPreviewMesh;
 
     /** Override speed for bucket cycle movement. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
@@ -39,15 +41,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
     bool bInfinite = true;
 
-    /** Override cycle delay. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
-    float CycleDelay = 0.f;
-
-    /** When true, bBeginMoving is used instead of director default behavior. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
-    bool bOverrideBeginMoving = false;
-
-    /** Optional per-point start moving behavior when bOverrideBeginMoving is true. */
+    /** Optional per-point start moving behavior. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Bucket|Movement")
     bool bBeginMoving = true;
 };

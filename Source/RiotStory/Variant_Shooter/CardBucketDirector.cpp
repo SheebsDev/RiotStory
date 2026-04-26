@@ -36,16 +36,8 @@ bool ACardBucketDirector::BuildSpawnPointMap(TMap<FName, ACardBucketSpawnPoint*>
     for (AActor* const SpawnPointActor : SpawnPointActors)
     {
         ACardBucketSpawnPoint* const SpawnPoint = Cast<ACardBucketSpawnPoint>(SpawnPointActor);
-        if (!IsValid(SpawnPoint))
-        {
-            continue;
-        }
 
-        if (SpawnPoint->SpawnPointId.IsNone())
-        {
-            UE_LOG(LogRiotStory, Warning, TEXT("CardBucketSpawnPoint '%s' has no SpawnPointId and will be ignored."), *SpawnPoint->GetName());
-            continue;
-        }
+        checkf(!SpawnPoint->SpawnPointId.IsNone(), TEXT("Spawn Point Id was not set on the level actor"));
 
         if (OutSpawnPoints.Contains(SpawnPoint->SpawnPointId))
         {
@@ -64,17 +56,8 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
     OutFailureReason.Reset();
     DespawnAllBuckets();
 
-    if (!IsValid(BucketSpawnTable))
-    {
-        OutFailureReason = TEXT("BucketSpawnTable is not configured on CardBucketDirector.");
-        return false;
-    }
-
-    if (ActiveSetId.IsNone())
-    {
-        OutFailureReason = TEXT("ActiveSetId is not configured on CardBucketDirector.");
-        return false;
-    }
+    checkf(IsValid(BucketSpawnTable), TEXT("BucketSpawnTable is not configured in blueprints for CardBucketDirector"));
+    checkf(!ActiveSetId.IsNone(), TEXT("ActiveSetId is not configured in blueprints for CardBucketDirector"));
 
     TMap<FName, ACardBucketSpawnPoint*> SpawnPointsById;
     if (!BuildSpawnPointMap(SpawnPointsById, OutFailureReason))
@@ -102,6 +85,7 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
         return false;
     }
 
+    //TODO: Remove or find a better place to validate instead of silently failing here
     for (const FCardBucketSpawnRow* const Row : SetRows)
     {
         if (Row->SpawnPointId.IsNone())
@@ -128,6 +112,13 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
             OutFailureReason = FString::Printf(TEXT("Spawn point '%s' has no BucketClass configured."), *Row->SpawnPointId.ToString());
             return false;
         }
+
+        const TArray<FVector> WorldControlPoints = SpawnPoint->ControlPointOffsets;
+        if (WorldControlPoints.Num() < 2)
+        {
+            OutFailureReason = FString::Printf(TEXT("Spawn point '%s' must define at least 2 ControlPointOffsets."), *Row->SpawnPointId.ToString());
+            return false;
+        }
     }
 
     UWorld* const World = GetWorld();
@@ -143,7 +134,7 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
         check(SpawnPoint);
 
         FActorSpawnParameters SpawnParams;
-        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
         ACardBucket* const SpawnedBucket = World->SpawnActor<ACardBucket>(SpawnPoint->BucketClass, SpawnPoint->GetActorTransform(), SpawnParams);
         if (!IsValid(SpawnedBucket))
@@ -153,20 +144,11 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
             return false;
         }
 
-        const FTransform SpawnTransform = SpawnPoint->GetActorTransform();
-        const FVector StartWorld = SpawnTransform.TransformPosition(SpawnPoint->StartOffset);
-        const FVector EndWorld = SpawnTransform.TransformPosition(SpawnPoint->EndOffset);
-
-        SpawnedBucket->StartPosition = StartWorld;
-        SpawnedBucket->EndPosition = EndWorld;
         SpawnedBucket->CycleSpeed = FMath::Max(0.f, SpawnPoint->CycleSpeed);
         SpawnedBucket->bInfinite = SpawnPoint->bInfinite;
-        SpawnedBucket->CycleDelay = FMath::Max(0.f, SpawnPoint->CycleDelay);
-        SpawnedBucket->CyclePosition = 0.f;
-        SpawnedBucket->bReturnToStart = false;
-        SpawnedBucket->SetActorLocation(StartWorld);
+        SpawnedBucket->SetControlPointOffsets(SpawnPoint->ControlPointOffsets);
 
-        const bool bShouldBeginMoving = SpawnPoint->bOverrideBeginMoving ? SpawnPoint->bBeginMoving : bBeginMovingOnSpawn;
+        const bool bShouldBeginMoving = SpawnPoint->bBeginMoving;
         if (bShouldBeginMoving)
         {
             SpawnedBucket->BeginMoving();
@@ -184,10 +166,7 @@ bool ACardBucketDirector::SpawnActiveSet(FString& OutFailureReason)
 
 void ACardBucketDirector::DespawnAllBuckets()
 {
-    TArray<TWeakObjectPtr<ACardBucket>> BucketsToDestroy = MoveTemp(SpawnedBuckets);
-    SpawnedBuckets.Reset();
-
-    for (const TWeakObjectPtr<ACardBucket>& Bucket : BucketsToDestroy)
+    for (const TWeakObjectPtr<ACardBucket>& Bucket : SpawnedBuckets)
     {
         if (!Bucket.IsValid())
         {

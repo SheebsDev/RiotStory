@@ -41,10 +41,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Buckets")
     FName ActiveSetId = NAME_None;
 
-    /** Starts movement by default after each spawn unless row overrides this behavior. */
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Card Buckets")
-    bool bBeginMovingOnSpawn = true;
-
 private:
     TArray<TWeakObjectPtr<ACardBucket>> SpawnedBuckets;
 

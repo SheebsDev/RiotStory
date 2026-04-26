@@ -1,13 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "CardBucket.generated.h"
 
 class UStaticMeshComponent;
 class UBoxComponent;
-#if WITH_EDITOR
-struct FPropertyChangedEvent;
-#endif
+class UInterpToMovementComponent;
 
 UCLASS(Blueprintable)
 class RIOTSTORY_API ACardBucket : public AActor
@@ -20,10 +19,11 @@ class RIOTSTORY_API ACardBucket : public AActor
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
     UBoxComponent* BoxCollision;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
+    UInterpToMovementComponent* InterpToMovement;
+
 public:
     ACardBucket();
-
-    virtual void Tick( float DeltaSeconds ) override;
 
     /** Start moving the Card bucket/bowl */
     UFUNCTION(BlueprintCallable)
@@ -33,50 +33,20 @@ public:
     UFUNCTION(BlueprintCallable)
     void StopMoving();
 
-    /** The starting position where the bucket will be */
-    UPROPERTY(EditAnywhere, Category="Movement")
-    FVector StartPosition;
+    /** Local-space control points used by the InterpToMovement component. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta=(MakeEditWidget=true))
+    TArray<FVector> ControlPointOffsets;
 
-    /** The end/second position where the bucket will move */
-    UPROPERTY(EditAnywhere, Category="Movement")
-    FVector EndPosition;
-
-    /** Speed it takes to move from start to end or vice versa */
+    /** Movement speed in normalized alpha units per second (Duration = 1 / CycleSpeed). */
     UPROPERTY(EditAnywhere, Category="Movement")
     float CycleSpeed = 1.f;
 
-    /** Will the bucket move back and forth between the start and end position infinitely */
+    /** Will the bucket move back and forth between control points indefinitely. */
     UPROPERTY(EditAnywhere, Category="Movement")
     bool bInfinite = true;
 
-    /** If the bucket will stop briefly before continuing after a cycle */
-    UPROPERTY(EditAnywhere, Category="Movement")
-    float CycleDelay = 0.f;
-
-    /* The position of the current cycle we are in */
-    UPROPERTY(EditDefaultsOnly, Category="Movement", meta = (AllowPrivateAccess = "true"))
-    float CyclePosition = 0.f;
-
-    /** State of the movement 'which direction we are headed' */
-    UPROPERTY(BlueprintReadOnly, Category="Movement")
-    bool bReturnToStart = false;
-
-#if WITH_EDITORONLY_DATA
-    UPROPERTY()
-    UBoxComponent* StartPreviewBox;
-
-    UPROPERTY()
-    UBoxComponent* EndPreviewBox;
-
-    UPROPERTY(Transient)
-    FVector LastStartPreviewLocation = FVector::ZeroVector;
-
-    UPROPERTY(Transient)
-    FVector LastEndPreviewLocation = FVector::ZeroVector;
-
-    UPROPERTY(Transient)
-    bool bPreviewBoxesInitialized = false;
-#endif
+    UFUNCTION(BlueprintCallable, Category="Movement")
+    void SetControlPointOffsets(const TArray<FVector>& NewPoints);
 
 protected:
     virtual void BeginPlay() override;
@@ -91,9 +61,7 @@ protected:
         bool bFromSweep,
         const FHitResult& SweepResult);
 
-#if WITH_EDITOR
-    virtual void PostEditMove(bool bFinished) override;
-    virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-    void UpdateEditorPreviewBoxes();
-#endif
+private:
+    void ApplyMovementSettings();
+    void RebuildMovementControlPoints();
 };
