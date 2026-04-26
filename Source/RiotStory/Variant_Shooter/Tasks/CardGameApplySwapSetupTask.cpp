@@ -4,7 +4,7 @@
 #include "Variant_Shooter/CardGamePlayerStartPoint.h"
 #include "Variant_Shooter/ShooterCharacter.h"
 #include "Variant_Shooter/ShooterPlayerController.h"
-#include "Input/GameplayInputTypeControllerInterface.h"
+#include "Variant_Shooter/Tasks/CardGameSpawnBucketsTask.h"
 
 void UCardGameApplySwapSetupTask::Initialize(FCardGameSetupTaskContext* InOutContext)
 {
@@ -16,15 +16,9 @@ void UCardGameApplySwapSetupTask::Activate()
     bWasSuccessful = false;
     FailureReason.Reset();
 
-    if (!SetupContext)
+    if (!SetupContext || !SetupContext->IsValidForSwap())
     {
-        FailTask(TEXT("Setup context is null."));
-        return;
-    }
-
-    if (!SetupContext->IsValidForSwap())
-    {
-        FailTask(TEXT("Setup context is missing required swap references."));
+        FailTask(TEXT("Setup context is null or invalid"));
         return;
     }
 
@@ -44,6 +38,17 @@ void UCardGameApplySwapSetupTask::Activate()
 
     CardGameUI->AddToViewport(0);
     SetupContext->CardGameUI = CardGameUI;
+
+    UCardGameSpawnBucketsTask* const SpawnBucketsTask = NewObject<UCardGameSpawnBucketsTask>(this);
+    SpawnBucketsTask->Initialize(SetupContext);
+    SpawnBucketsTask->Activate();
+
+    if (!SpawnBucketsTask->WasSuccessful())
+    {
+        FailTask(SpawnBucketsTask->GetFailureReason());
+        return;
+    }
+
     SetupContext->bSwapApplied = true;
     bWasSuccessful = true;
     EndTask();

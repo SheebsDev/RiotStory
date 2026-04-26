@@ -5,6 +5,8 @@
 #include "ShooterUI.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
+#include "RiotStory.h"
+#include "Variant_Shooter/CardBucketDirector.h"
 
 void AShooterGameMode::BeginPlay()
 {
@@ -30,4 +32,42 @@ void AShooterGameMode::IncrementTeamScore(uint8 TeamByte)
 
 	// update the UI
 	ShooterUI->BP_UpdateScore(TeamByte, Score);
+}
+
+ACardBucketDirector* AShooterGameMode::CreateCardBucketDirector()
+{
+	if (IsValid(CardBucketDirector))
+	{
+		return CardBucketDirector;
+	}
+
+	checkf(CardBucketDirectorClass, TEXT("CardBucketDirector class was never set!"));
+
+	UWorld* const World = GetWorld();
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	CardBucketDirector = World->SpawnActor<ACardBucketDirector>(CardBucketDirectorClass, FTransform::Identity, SpawnParams);
+	if (!IsValid(CardBucketDirector))
+	{
+		UE_LOG(LogRiotStory, Warning, TEXT("ShooterGameMode failed to spawn CardBucketDirector from class '%s'."), *CardBucketDirectorClass->GetName());
+	}
+
+	return CardBucketDirector;
+}
+
+void AShooterGameMode::DestroyCardBucketDirector()
+{
+	if (!CardBucketDirector)
+	{
+		return;
+	}
+
+	if (IsValid(CardBucketDirector))
+	{
+		CardBucketDirector->Destroy();
+	}
+
+	CardBucketDirector = nullptr;
 }

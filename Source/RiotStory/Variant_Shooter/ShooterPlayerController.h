@@ -27,7 +27,7 @@ public:
 	AShooterPlayerController();
 
 	UFUNCTION(BlueprintPure, Category="Shooter")
-	inline AShooterCharacter* GetShooterPawn() { return Cast<AShooterCharacter>(GetPawn()); }
+	AShooterCharacter* GetShooterPawn();
 
 	UModeTransitionUI* GetOrCreateModeTransitionUI();
 	UCardGameUI* GetOrCreateCardGameUI();

@@ -19,6 +19,11 @@ AShooterPlayerController::AShooterPlayerController()
 	PlayerCameraManagerClass = APlayerCameraManager::StaticClass();
 }
 
+AShooterCharacter* AShooterPlayerController::GetShooterPawn()
+{
+	return Cast<AShooterCharacter>(GetPawn());
+}
+
 void AShooterPlayerController::BeginPlay()
 {
 	Super::BeginPlay();

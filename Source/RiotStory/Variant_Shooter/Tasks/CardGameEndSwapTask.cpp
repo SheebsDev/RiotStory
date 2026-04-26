@@ -1,10 +1,8 @@
 #include "CardGameEndSwapTask.h"
 
 #include "UI/CardGameUI.h"
-#include "Variant_Shooter/CardGamePlayerStartPoint.h"
 #include "Variant_Shooter/ShooterCharacter.h"
-#include "Variant_Shooter/ShooterPlayerController.h"
-#include "Input/GameplayInputTypeControllerInterface.h"
+#include "Variant_Shooter/Tasks/CardGameDespawnBucketsTask.h"
 
 void UCardGameEndSwapTask::Initialize(FCardGameSetupTaskContext* InOutContext)
 {
@@ -22,13 +20,25 @@ void UCardGameEndSwapTask::Activate()
         return;
     }
 
-    AShooterPlayerController* const ShooterController = SetupContext->ShooterController.Get();
     AShooterCharacter* const ShooterPawn = SetupContext->ShooterPawn.Get();
 
     const FTransform& ReturnTransform = SetupContext->PlayerReturnTransform;
     ShooterPawn->SetActorLocationAndRotation(ReturnTransform.GetLocation(), ReturnTransform.Rotator());
 
-    SetupContext->CardGameUI->RemoveFromParent();
+    if (UCardGameUI* const CardGameUI = SetupContext->CardGameUI.Get())
+    {
+        CardGameUI->RemoveFromParent();
+    }
+
+    UCardGameDespawnBucketsTask* const DespawnBucketsTask = NewObject<UCardGameDespawnBucketsTask>(this);
+    DespawnBucketsTask->Initialize(SetupContext);
+    DespawnBucketsTask->Activate();
+
+    if (!DespawnBucketsTask->WasSuccessful())
+    {
+        FailTask(DespawnBucketsTask->GetFailureReason());
+        return;
+    }
 
     bWasSuccessful = true;
     EndTask();
