@@ -190,6 +190,7 @@ void UAimIndicatorComponent::UpdatePathVisualization()
 				}
 
 				SplineMesh->SetStaticMesh(SplineSegmentMesh);
+				SplineMesh->SetCastShadow(false);
 				if (SplineSegmentMaterial)
 				{
 					SplineMesh->SetMaterial(0, SplineSegmentMaterial);
@@ -197,22 +198,36 @@ void UAimIndicatorComponent::UpdatePathVisualization()
 
 				SplineMesh->SetForwardAxis(SplineForwardAxis, false);
 
-				FVector StartLocation;
-				FVector StartTangent;
-				FVector EndLocation;
-				FVector EndTangent;
+				FVector StartLocation, StartTangent;
+				FVector EndLocation, EndTangent;
 
 				PathSplineComponent->GetLocationAndTangentAtSplinePoint(SegmentIndex, StartLocation, StartTangent, ESplineCoordinateSpace::Local);
 				PathSplineComponent->GetLocationAndTangentAtSplinePoint(SegmentIndex + 1, EndLocation, EndTangent, ESplineCoordinateSpace::Local);
 
-				StartTangent *= SplineTangentScale;
-				EndTangent *= SplineTangentScale;
+				const FVector SegmentVector = EndLocation - StartLocation;
+				const float SegmentLength = SegmentVector.Size();
+				if (SegmentLength <= KINDA_SMALL_NUMBER)
+				{
+					SplineMesh->SetHiddenInGame(true);
+					continue;
+				}
 
-				SplineMesh->SetStartAndEnd(StartLocation, StartTangent, EndLocation, EndTangent, false);
+				const FVector SegmentDirection = SegmentVector / SegmentLength;
+				const float PadPercent = FMath::Clamp(SplineSegmentPaddingPercent, 0.0f, 0.49f);
+				const float PadDistance = SegmentLength * PadPercent;
+				const FVector TrimmedStart = StartLocation + (SegmentDirection * PadDistance);
+				const FVector TrimmedEnd = EndLocation - (SegmentDirection * PadDistance);
+				const float RemainingRatio = FMath::Clamp((SegmentLength - (2.0f * PadDistance)) / SegmentLength, 0.0f, 1.0f);
+				const float FinalTangentScale = SplineTangentScale * RemainingRatio;
+
+				StartTangent *= FinalTangentScale;
+				EndTangent *= FinalTangentScale;
+
+				SplineMesh->SetStartAndEnd(TrimmedStart, StartTangent, TrimmedEnd, EndTangent, false);
 
 				const float StartAlpha = RequiredSegments > 0 ? static_cast<float>(SegmentIndex) / static_cast<float>(RequiredSegments) : 0.0f;
 				const float EndAlpha = RequiredSegments > 0 ? static_cast<float>(SegmentIndex + 1) / static_cast<float>(RequiredSegments) : 1.0f;
-
+				
 				SplineMesh->SetStartScale(FMath::Lerp(SplineStartScale, SplineEndScale, StartAlpha), false);
 				SplineMesh->SetEndScale(FMath::Lerp(SplineStartScale, SplineEndScale, EndAlpha), true);
 				SplineMesh->SetHiddenInGame(false);
@@ -265,10 +280,7 @@ void UAimIndicatorComponent::HidePathVisualization()
 
 void UAimIndicatorComponent::EnsureSplineComponent()
 {
-	if (IsValid(PathSplineComponent))
-	{
-		return;
-	}
+	if (IsValid(PathSplineComponent)) return;
 
 	AActor* const Owner = GetOwner();
 	if (!IsValid(Owner))

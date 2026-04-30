@@ -26,6 +26,7 @@ namespace RiotStoryGameplayTags
 
 	RIOTSTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameEvent_CardThrowGame_StateChanged);
     RIOTSTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameEvent_CardThrowGame_CardThrown);
+    RIOTSTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameEvent_CardThrowGame_CardThrownRemoved);
     RIOTSTORY_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameEvent_CardThrowGame_CardScored);
 	//~End Card Gameplay Events
 

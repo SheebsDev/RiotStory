@@ -14,6 +14,7 @@ namespace RiotStoryGameplayTags
 
     UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CardThrowGame_StateChanged, "GameEvent.CardThrowGame.StateChanged");
     UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CardThrowGame_CardThrown, "GameEvent.CardThrowGame.CardThrown");
+    UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CardThrowGame_CardThrownRemoved, "GameEvent.CardThrowGame.CardThrownRemoved");
     UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_CardThrowGame_CardScored, "GameEvent.CardThrowGame.CardScored");
 
     UE_DEFINE_GAMEPLAY_TAG(TAG_GameEvent_Drinks_DrankBeverage, "GameEvent.Drinks.DrankBeverage");

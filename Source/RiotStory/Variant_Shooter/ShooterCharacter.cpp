@@ -17,6 +17,7 @@
 #include "Inventory/InventoryComponent.h"
 #include "Variant_Shooter/Weapons/AimIndicatorComponent.h"
 #include "Variant_Shooter/Weapons/BusinessCardProjectile.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "RiotStoryEventMessages.h"
 
 AShooterCharacter::AShooterCharacter()
@@ -29,7 +30,7 @@ AShooterCharacter::AShooterCharacter()
 
 	//Set Card ThrowPath Defaults
 	CurrentThrowPathData.MaxSimTime = 5.f;
-	CurrentThrowPathData.SimFrequency = 0.f;
+	CurrentThrowPathData.SimFrequency = 20.f;
 	CurrentThrowPathData.TraceChannel = ECC_Visibility;
 	CurrentThrowPathData.bTraceWithCollision = true;
 	CurrentThrowPathData.bTraceComplex = false;
@@ -199,7 +200,7 @@ void AShooterCharacter::DoStopFiring()
 		return;
 	}
 
-	if (bIsCardThrowingEnabled && CardProjectileClass)
+	if (bIsCardThrowingEnabled && bIsAimingCard && CardProjectileClass)
 	{
 		bIsAimingCard = false;
 		ThrowCard();
@@ -350,6 +351,24 @@ void AShooterCharacter::ConsumeItem_Implementation(AActor* InteractorActor, FNam
 bool AShooterCharacter::GetAimIndicatorPathData(FAimIndicatorPathData& OutPathData) const
 {
 	OutPathData = CurrentThrowPathData;
+
+	// Align prediction gravity with the actual projectile movement settings.
+	if (CardProjectileClass)
+	{
+		const ABusinessCardProjectile* const ProjectileCDO = CardProjectileClass->GetDefaultObject<ABusinessCardProjectile>();
+		if (IsValid(ProjectileCDO))
+		{
+			if (const UProjectileMovementComponent* const ProjectileMovement = ProjectileCDO->FindComponentByClass<UProjectileMovementComponent>())
+			{
+				if (const UWorld* const World = GetWorld())
+				{
+					const float EffectiveGravityZ = World->GetGravityZ() * ProjectileMovement->ProjectileGravityScale;
+					OutPathData.bOverrideGravityZ = true;
+					OutPathData.GravityZ = FMath::IsNearlyZero(EffectiveGravityZ) ? 0.0001f : EffectiveGravityZ;
+				}
+			}
+		}
+	}
 
 	return true;
 }

@@ -3,8 +3,13 @@
 #include "Game/RiotStoryGameplayTags.h"
 #include "RiotStory.h"
 #include "Variant_Shooter/Tasks/CardGameBuildSetupContextTask.h"
+#include "Variant_Shooter/Tasks/CardGameEndingGameTask.h"
 #include "Variant_Shooter/Tasks/CardGameWaitTransitionEventsTask.h"
 #include "Variant_Shooter/Tasks/CardGameWaitTransitionOutEventsTask.h"
+#include "UI/CardGameUI.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
+#include "TimerManager.h"
 
 void ARiotStoryGameState::BeginPlay()
 {
@@ -14,6 +19,7 @@ void ARiotStoryGameState::BeginPlay()
 
 void ARiotStoryGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+    ResetScoreCombo();
     CleanupActiveSetupWaitTask();
     UnregisterEventListeners();
     Super::EndPlay(EndPlayReason);
@@ -45,6 +51,7 @@ void ARiotStoryGameState::PrepareCardThrowingGame()
 
     PointsScored = 0;
     NumCardsThrown = 0;
+    ResetScoreCombo();
     bCardGameSetupInProgress = true;
 
     UGameplayMessageSubsystem::Get(this).BroadcastMessage(
@@ -70,7 +77,7 @@ void ARiotStoryGameState::StartCardThrowingGame()
     UGameplayMessageSubsystem::Get(this).UnregisterListener(CardScoredListenerHandler);
 
     CardThrownListenerHandler = UGameplayMessageSubsystem::Get(this).RegisterListener(
-        RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_CardThrown,
+        RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_CardThrownRemoved,
         this,
         &ARiotStoryGameState::HandleCardThrown
     );
@@ -105,6 +112,7 @@ void ARiotStoryGameState::EndCardThrowingGame()
     UGameplayMessageSubsystem::Get(this).UnregisterListener(CardThrownListenerHandler);
     UGameplayMessageSubsystem::Get(this).UnregisterListener(CardScoredListenerHandler);
     bCardGameActive = false;
+    ResetScoreCombo();
 }
 
 void ARiotStoryGameState::FailCardThrowingGameSetup(const FString& Reason)
@@ -114,6 +122,7 @@ void ARiotStoryGameState::FailCardThrowingGameSetup(const FString& Reason)
     CleanupActiveSetupWaitTask();
     bCardGameSetupInProgress = false;
     bCardGameActive = false;
+    ResetScoreCombo();
 
     UGameplayMessageSubsystem::Get(this).BroadcastMessage(
         RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_StateChanged,
@@ -190,11 +199,107 @@ void ARiotStoryGameState::HandleCardThrown(FGameplayTag Channel, const FGameEven
 
     if (NumCardsThrown >= StartingCardCount)
     {
-        EndCardThrowingGame();
+        const EGameEventCardThrowGameResult EndResult = PointsScored >= TargetCardGameScore
+            ? EGameEventCardThrowGameResult::Succeeded
+            : EGameEventCardThrowGameResult::Failed;
+
+        //Change state to ending and wait for final end command from player confirmation
+        UGameplayMessageSubsystem::Get(this).BroadcastMessage(
+            RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_StateChanged,
+            FGameEventCardThrowStateGameMessage(EGameEventCardThrowGameState::Ending, EndResult)
+        );
+
+        UCardGameEndingGameTask* const EndingTask = NewObject<UCardGameEndingGameTask>(this);
+        EndingTask->Initialize(&ActiveSetupContext, EndResult, PointsScored);
+        EndingTask->Activate();
     }
 }
 
 void ARiotStoryGameState::HandleCardScored(FGameplayTag Channel, const FGameEventCardScoredMessage& Message)
 {
     PointsScored += Message.Points;
+    ActiveSetupContext.CardGameUI->BP_UpdateScore(PointsScored);
+    ++CurrentScoreCombo;
+    RestartScoreComboTimer();
+    PlayScoreComboSound();
+    DoComboScreenShake();
+
+    //Resetting combo if we have reach the max
+    if (CurrentScoreCombo >= MaxCombo)
+    {
+        ResetScoreCombo();
+    }
+}
+
+void ARiotStoryGameState::ResetScoreCombo()
+{
+    CurrentScoreCombo = 0;
+
+    if (UWorld* const World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(ScoreComboTimerHandle);
+    }
+}
+
+void ARiotStoryGameState::RestartScoreComboTimer()
+{
+    if (ScoreComboDuration <= 0.0f)
+    {
+        return;
+    }
+
+    if (UWorld* const World = GetWorld())
+    {
+        World->GetTimerManager().SetTimer(
+            ScoreComboTimerHandle,
+            this,
+            &ARiotStoryGameState::ResetScoreCombo,
+            ScoreComboDuration,
+            false
+        );
+    }
+}
+
+void ARiotStoryGameState::PlayScoreComboSound() const
+{
+    USoundBase* SoundToPlay = nullptr;
+
+    if (ScoreComboSounds.Num() > 0)
+    {
+        const int32 SoundIndex = FMath::Clamp(CurrentScoreCombo - 1, 0, ScoreComboSounds.Num() - 1);
+        SoundToPlay = ScoreComboSounds[SoundIndex];
+    }
+
+    if (!IsValid(SoundToPlay))
+    {
+        SoundToPlay = DefaultScoreSound;
+    }
+
+    if (IsValid(SoundToPlay))
+    {
+        UGameplayStatics::PlaySound2D(this, SoundToPlay);
+    }
+
+    //Play the punchy sound along with it
+
+    SoundToPlay = nullptr;
+    if (ScoreComboPunchSounds.Num() > 0)
+    {
+        const int32 SoundIndex = FMath::Clamp(CurrentScoreCombo - 1, 0, ScoreComboPunchSounds.Num() - 1);
+        SoundToPlay = ScoreComboPunchSounds[SoundIndex];
+    }
+
+    if (IsValid(SoundToPlay))
+    {
+        UGameplayStatics::PlaySound2D(this, SoundToPlay);
+    }
+}
+
+void ARiotStoryGameState::DoComboScreenShake()
+{
+    APlayerController *PlayerController = GetWorld()->GetFirstPlayerController();
+    if (PlayerController)
+    {
+        PlayerController->ClientStartCameraShake(CameraShakeClass, CurrentScoreCombo * 0.5);
+    }
 }

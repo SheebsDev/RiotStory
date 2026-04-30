@@ -37,6 +37,10 @@ void UCardGameApplySwapSetupTask::Activate()
     }
 
     CardGameUI->AddToViewport(0);
+    CardGameUI->BP_UpdateScore(0);
+    CardGameUI->BP_UpdateMaxCardCount(SetupContext->StartingCardCount);
+    CardGameUI->BP_ShowStartingScreen();
+    ShooterPawn->SetAvailableNumberOfCards(SetupContext->StartingCardCount);
     SetupContext->CardGameUI = CardGameUI;
 
     UCardGameSpawnBucketsTask* const SpawnBucketsTask = NewObject<UCardGameSpawnBucketsTask>(this);

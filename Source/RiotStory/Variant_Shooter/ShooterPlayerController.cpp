@@ -76,6 +76,7 @@ void AShooterPlayerController::OnPossess(APawn* InPawn)
 		// subscribe to the pawn's delegates
 		ShooterCharacter->OnBulletCountUpdated.AddDynamic(this, &AShooterPlayerController::OnBulletCountUpdated);
 		ShooterCharacter->OnDamaged.AddDynamic(this, &AShooterPlayerController::OnPawnDamaged);
+		ShooterCharacter->OnAvailableCardCountChanged.AddDynamic(this, &AShooterPlayerController::OnCardCountUpdated);
 
 		// force update the life bar
 		ShooterCharacter->OnDamaged.Broadcast(1.0f);
@@ -86,8 +87,6 @@ void AShooterPlayerController::OnPossess(APawn* InPawn)
 
 void AShooterPlayerController::OnPawnDestroyed(AActor* DestroyedActor)
 {
-	(void)DestroyedActor;
-
 	if (UConversationRuntimeComponent* const ConversationRuntimeTemp = GetConversationRuntime();
 		IsValid(ConversationRuntimeTemp) && ConversationRuntimeTemp->IsConversationActive())
 	{
@@ -119,6 +118,14 @@ void AShooterPlayerController::OnPawnDestroyed(AActor* DestroyedActor)
 			// possess the character
 			Possess(RespawnedCharacter);
 		}
+	}
+}
+
+void AShooterPlayerController::OnCardCountUpdated(int32 NewCardCount)
+{
+	if (CardGameUI)
+	{
+		CardGameUI->BP_UpdateCardCount(NewCardCount);
 	}
 }
 

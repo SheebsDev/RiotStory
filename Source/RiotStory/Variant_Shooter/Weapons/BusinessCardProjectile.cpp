@@ -4,6 +4,8 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "TimerManager.h"
 #include "EngineUtils.h"
+#include "Game/RiotStoryGameplayTags.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 
 ABusinessCardProjectile::ABusinessCardProjectile()
 {
@@ -25,17 +27,23 @@ void ABusinessCardProjectile::SetCardSpeed(float NewSpeed)
 {
     ProjectileMovement->InitialSpeed = NewSpeed;
     ProjectileMovement->Velocity = GetActorForwardVector() * NewSpeed;
+    ProjectileMovement->UpdateComponentVelocity();
 }
 
 void ABusinessCardProjectile::SetLaunchVelocity(const FVector& NewLaunchVelocity)
 {
     ProjectileMovement->Velocity = NewLaunchVelocity;
     ProjectileMovement->InitialSpeed = NewLaunchVelocity.Size();
+    ProjectileMovement->UpdateComponentVelocity();
 }
 
 void ABusinessCardProjectile::Consume()
 {
     OnCardProjectileRemoved.Broadcast(false);
+    UGameplayMessageSubsystem::Get(this).BroadcastMessage(
+        RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_CardThrownRemoved,
+        FGameEventCardThrownMessage()
+    );
     Destroy();
 }
 
@@ -78,5 +86,9 @@ void ABusinessCardProjectile::EndPlay(EEndPlayReason::Type EndPlayReason)
 void ABusinessCardProjectile::OnLifetimeExpired()
 {
     OnCardProjectileRemoved.Broadcast(true);
+    UGameplayMessageSubsystem::Get(this).BroadcastMessage(
+        RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_CardThrownRemoved,
+        FGameEventCardThrownMessage()
+    );
     Destroy();
 }

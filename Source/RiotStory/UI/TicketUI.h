@@ -5,7 +5,7 @@
 #include "TicketUI.generated.h"
 
 /**
- *  Simple bullet counter UI widget for a first person shooter game
+ *  Simple Ticket UI HUD
  */
 UCLASS(abstract)
 class RIOTSTORY_API UTicketUI : public UUserWidget
@@ -14,7 +14,6 @@ class RIOTSTORY_API UTicketUI : public UUserWidget
 	
 public:
 
-	/** Update the widget with the interaction meta data */
 	UFUNCTION(BlueprintImplementableEvent, Category="Ticket", meta=(DisplayName = "AddTicket"))
     void BP_AddTicket();
 

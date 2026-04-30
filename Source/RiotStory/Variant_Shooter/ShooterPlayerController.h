@@ -74,6 +74,10 @@ protected:
 	UFUNCTION()
 	void OnBulletCountUpdated(int32 MagazineSize, int32 Bullets);
 
+	/** Called when the card count on the pawn is updated */
+	UFUNCTION()
+	void OnCardCountUpdated(int NewCardCount);
+
 	/** Called when the possessed pawn is damaged */
 	UFUNCTION()
 	void OnPawnDamaged(float LifePercent);

@@ -67,6 +67,10 @@ public:
 	UPROPERTY(EditAnywhere, Category="Aim Indicator|Visualization", meta = (ClampMin = 0.0, ClampMax = 5.0))
 	float SplineTangentScale = 0.35f;
 
+	/** Percent of each segment trimmed from both ends to create spacing between segment meshes. */
+	UPROPERTY(EditAnywhere, Category="Aim Indicator|Visualization", meta = (ClampMin = 0.0, ClampMax = 0.49))
+	float SplineSegmentPaddingPercent = 0.10f;
+
 	/** Forward axis expected by the segment mesh */
 	UPROPERTY(EditAnywhere, Category="Aim Indicator|Visualization")
 	TEnumAsByte<ESplineMeshAxis::Type> SplineForwardAxis = ESplineMeshAxis::X;

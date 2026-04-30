@@ -30,13 +30,6 @@ void UCardGameFinalizeStartTask::Activate()
     const EGameplayInputType DisabledDuringGame = EGameplayInputType::Move | EGameplayInputType::Interact;
     ShooterController->SetCurrentModeInputTypes(~DisabledDuringGame);
     ShooterPawn->SetEnableCardThrowing(true);
-    ShooterPawn->SetAvailableNumberOfCards(SetupContext->StartingCardCount);
-
-    if (UCardGameUI* const CardGameUI = SetupContext->CardGameUI.Get())
-    {
-        CardGameUI->BP_UpdateScore(0);
-        CardGameUI->BP_UpdateCardCount(SetupContext->StartingCardCount);
-    }
 
     UGameplayMessageSubsystem::Get(ShooterController).BroadcastMessage(
         RiotStoryGameplayTags::TAG_GameEvent_CardThrowGame_StateChanged,
