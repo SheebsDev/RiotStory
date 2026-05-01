@@ -116,7 +116,7 @@ And callable notify functions These will be used in the UI to respond internally
 
 Blueprint Example:
 
-![Conversation UI Binding Placeholder](https://via.placeholder.com/1280x720?text=Conversation+UI+Binding+Placeholder)
+![Conversation UI Binding](Documentation/Images/ConversationBlueprintUI.png)
 
 #### 5) Runtime Behavior Summary
 
