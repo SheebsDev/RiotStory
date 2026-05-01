@@ -11,7 +11,7 @@ It also contains a few extra side mechanics that show the built systems at work.
 This document will cover multiple systems and how to use them.  As well as my thoughts for future improvements.
 
 ## Gameplay Videos
-https://www.youtube.com/LINK
+https://youtu.be/KdOu6tCFDEg
 
 ## Table of Contents
 
