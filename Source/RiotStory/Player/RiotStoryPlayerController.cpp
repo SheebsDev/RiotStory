@@ -278,6 +278,7 @@ void ARiotStoryPlayerController::RefreshInputMappingContexts()
 			RemoveMappingContexts(Subsystem, CombatMappingContexts);
 			RemoveMappingContexts(Subsystem, InteractMappingContexts);
 			RemoveMappingContexts(Subsystem, ConversationSelectionInputMappingContexts);
+			RemoveMappingContexts(Subsystem, DrinkSelectionInputMappingContexts);
 
 			AddMappingContexts(Subsystem, DefaultMappingContexts, 0);
 
@@ -299,12 +300,17 @@ void ARiotStoryPlayerController::RefreshInputMappingContexts()
 			if (IsGameplayInputTypeEnabled(EGameplayInputType::Combat))
 			{
 				AddMappingContexts(Subsystem, CombatMappingContexts, 0);
+				AddMappingContexts(Subsystem, DrinkSelectionInputMappingContexts, 0);
 			}
 
 			if (IsGameplayInputTypeEnabled(EGameplayInputType::Interact))
 			{
 				AddMappingContexts(Subsystem, InteractMappingContexts, 0);
-				AddMappingContexts(Subsystem, ConversationSelectionInputMappingContexts, 0);
+
+				if (ConversationRuntime->IsConversationActive())
+				{
+					AddMappingContexts(Subsystem, ConversationSelectionInputMappingContexts, 0);
+				}
 			}
 		}
 	}
