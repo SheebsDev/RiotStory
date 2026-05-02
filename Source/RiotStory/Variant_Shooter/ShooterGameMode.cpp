@@ -31,7 +31,7 @@ void AShooterGameMode::IncrementTeamScore(uint8 TeamByte)
 	TeamScores.Add(TeamByte, Score);
 
 	// update the UI
-	ShooterUI->BP_UpdateScore(TeamByte, Score);
+	//ShooterUI->BP_UpdateScore(TeamByte, Score);
 }
 
 ACardBucketDirector* AShooterGameMode::CreateCardBucketDirector()

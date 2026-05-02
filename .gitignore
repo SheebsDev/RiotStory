@@ -75,6 +75,8 @@ DerivedDataCache/*
 
 # VSCode
 .vscode/*
+*.code-workspace
+.ignore
 
 # Third party content
 Content/ThirdPartyContent/*
