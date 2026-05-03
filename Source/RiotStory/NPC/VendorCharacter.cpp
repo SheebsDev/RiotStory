@@ -24,6 +24,9 @@ AVendorCharacter::AVendorCharacter()
 	Interactee->DisplayInfo.ActionText = FText::FromString(TEXT("Talk"));
 	Interactee->DisplayInfo.DisplayName = FText::FromString(TEXT("Vendor"));
 	Interactee->InteractionActionTag = RiotStoryConversationTags::TAG_Interaction_Verb_Talk;
+	USkeletalMeshComponent* CharMesh = GetMesh();
+	CharMesh->SetRenderCustomDepth(true);
+	CharMesh->SetCustomDepthStencilValue(1); //Default normal highlight
 
 	ConversationSource = CreateDefaultSubobject<UConversationSourceComponent>(TEXT("Conversation Source"));
 }
@@ -38,7 +41,7 @@ void AVendorCharacter::ToggleInteractableHighlight_Implementation(bool bHighligh
 	if (bIsHighlighted != bHighlighted)
 	{
 		bIsHighlighted = bHighlighted;
-		//TODO: Update material //Add or remove to the custom stencial pass
+		GetMesh()->SetCustomDepthStencilValue(bIsHighlighted ? 2 : 1);
 	}
 }
 
