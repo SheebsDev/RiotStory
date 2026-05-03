@@ -2,6 +2,7 @@
 #include "Conversation/ConversationGameplayTags.h"
 #include "Conversation/ConversationSourceComponent.h"
 #include "Interaction/InteracteeComponent.h"
+#include "Rendering/RiotStoryRenderStencil.h"
 #include "Components/SphereComponent.h"
 #include "Components/CapsuleComponent.h"
 
@@ -26,7 +27,7 @@ AVendorCharacter::AVendorCharacter()
 	Interactee->InteractionActionTag = RiotStoryConversationTags::TAG_Interaction_Verb_Talk;
 	USkeletalMeshComponent* CharMesh = GetMesh();
 	CharMesh->SetRenderCustomDepth(true);
-	CharMesh->SetCustomDepthStencilValue(1); //Default normal highlight
+	CharMesh->SetCustomDepthStencilValue(static_cast<int32>(ERiotStoryCustomDepthStencil::InteractableHighlight));
 
 	ConversationSource = CreateDefaultSubobject<UConversationSourceComponent>(TEXT("Conversation Source"));
 }
@@ -41,7 +42,11 @@ void AVendorCharacter::ToggleInteractableHighlight_Implementation(bool bHighligh
 	if (bIsHighlighted != bHighlighted)
 	{
 		bIsHighlighted = bHighlighted;
-		GetMesh()->SetCustomDepthStencilValue(bIsHighlighted ? 2 : 1);
+		GetMesh()->SetCustomDepthStencilValue(
+			static_cast<int32>(
+				bIsHighlighted
+					? ERiotStoryCustomDepthStencil::InteractableFocused
+					: ERiotStoryCustomDepthStencil::InteractableHighlight));
 	}
 }
 

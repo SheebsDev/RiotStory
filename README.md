@@ -10,6 +10,9 @@ It also contains a few extra side mechanics that show the built systems at work.
 
 This document will cover multiple systems and how to use them.  As well as my thoughts for future improvements.
 
+### Latest Updates
+- [Updates](Documentation/Updates/README.md)
+
 ## Gameplay Videos
 https://youtu.be/KdOu6tCFDEg
 
@@ -214,7 +217,7 @@ Execution depends on `UInteracteeComponent::CanInteract` and mode-specific logic
 
 ### Future Thoughts
 
-- Need to add in the PostProcessing to do outlines for highlight objects with Custom Stencil
+- ~~Need to add in the PostProcessing to do outlines for highlight objects with Custom Stencil~~ ([Updates](Documentation/Updates/README.md))
 - Interact system is limited to tap and go.  So may want to add in press and hold interactions
 
 ---
